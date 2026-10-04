@@ -1,0 +1,55 @@
+<Border Background="{DynamicResource ColorBrush7}"
+        CornerRadius="5"
+        Margin="0,0,0,5">
+    <StackPanel  Margin="5">
+
+        <Grid Margin="5,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock VerticalAlignment="Center"
+                       FontSize="16"
+                       Foreground="{DynamicResource ColorBrush1}"
+                       Text="{date}"/>
+            <TextBlock Margin="10,0,0,0"
+                       Grid.Column="2"
+                       VerticalAlignment="Center"
+                       FontSize="22"
+                       Foreground="{DynamicResource ColorBrush3}"
+                       Text="{temp_max}°/{temp_min}°"/>
+            <Border
+                ToolTip="{weather_text}"
+                Grid.Column="3"
+                Margin="5,0,0,0"
+                Background="{DynamicResource ColorBrush7}">
+                <Path Width="20"
+                      Height="20"
+                      VerticalAlignment="Center"
+                      Stretch="Uniform"
+                      Fill="{DynamicResource ColorBrush3}"
+                      Data="{weather_icon}"/>
+            </Border>
+            <TextBlock Margin="3,1"
+                       Grid.Column="5"
+                       VerticalAlignment="Center"
+                       FontSize="14"
+                       Foreground="{DynamicResource ColorBrush4}"
+                       Text="风速 {wind}km/h"/>
+            <TextBlock Margin="3,1"
+                       Grid.Column="7"
+                       VerticalAlignment="Center"
+                       FontSize="14"
+                       Foreground="{DynamicResource ColorBrush4}"
+                       Text="湿度 {humi}%"/>
+        </Grid>
+    </StackPanel>
+</Border>
+        

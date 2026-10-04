@@ -1,0 +1,48 @@
+name: 更新页面
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  deployments: write
+
+jobs:
+  update-and-deploy:
+    runs-on: windows-latest
+    env:
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pymusiclibrary requests tzdata pypinyin
+
+      - name: Run main.py
+        env:
+          MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+        run: python main.py
+
+      - name: Push output to pagedata branch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout --orphan pagedata
+          git rm -rf --cached . > /dev/null 2>&1 || true
+
+          git --work-tree=output add -A -f
+          git commit -m "更新页面 $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+          git push --force origin pagedata

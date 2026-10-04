@@ -1,0 +1,9 @@
+<local:MyCard
+    Title="{letter}"
+    Margin="0,4"
+    CanSwap="True"
+    IsSwapped="True">
+    <StackPanel Margin="10,36,10,10">
+        {items}
+    </StackPanel>
+</local:MyCard>

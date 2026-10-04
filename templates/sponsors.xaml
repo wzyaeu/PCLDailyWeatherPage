@@ -1,0 +1,3 @@
+<TextBlock FontSize="15"
+           Text="{sponsor}"
+           Margin="2"/>

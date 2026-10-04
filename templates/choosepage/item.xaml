@@ -1,0 +1,13 @@
+<local:MyListItem
+    Margin="0,2"
+    Title="{letter} {name}"
+    EventType="修改变量"
+    EventData="PCLDailyWeatherPage|{locaID}"
+    Type="Clickable">
+    <local:CustomEventService.Events>
+        <local:CustomEventCollection>
+            <local:CustomEvent Type="弹出窗口"
+                               Data="已选择为 {name} 地区|已选择为 {name} 地区，请刷新主页"/>
+        </local:CustomEventCollection>
+    </local:CustomEventService.Events>
+</local:MyListItem>

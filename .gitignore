@@ -1,0 +1,7 @@
+.venv/
+.vscode/
+test/
+test_environment
+__pycache__/
+data/*
+!data/locations.json
