@@ -1,13 +1,32 @@
-<local:MyListItem
-    Margin="0,2"
-    Title="{letter} {name}"
-    EventType="修改变量"
-    EventData="PCLDailyWeatherPage|{locaID}"
-    Type="Clickable">
-    <local:CustomEventService.Events>
-        <local:CustomEventCollection>
-            <local:CustomEvent Type="弹出窗口"
-                               Data="已选择为 {name} 地区|已选择为 {name} 地区，请刷新主页"/>
-        </local:CustomEventCollection>
-    </local:CustomEventService.Events>
-</local:MyListItem>
+<Grid>
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="auto"/>
+    </Grid.ColumnDefinitions>
+    <local:MyListItem
+        Margin="0,2"
+        Title="{letter} {name}"
+        EventType="刷新主页"
+        EventData="-"
+        Type="Clickable">
+        <local:CustomEventService.Events>
+            <local:CustomEventCollection>
+                <local:CustomEvent Type="弹出窗口"
+                                   Data="已选择为 {name} 地区|已选择为 {name} 地区，"/>
+                <local:CustomEvent Type="修改变量"
+                                   Data="PCLDailyWeatherPage|{locaID}"/>
+                <local:CustomEvent Type="刷新主页"
+                                   Data="-"/>
+            </local:CustomEventCollection>
+        </local:CustomEventService.Events>
+    </local:MyListItem>
+    <local:MyListItem
+        Margin="0,2"
+        Title="复制联网主页链接"
+        EventType="复制文本"
+        EventData="https://weather-p.kaphia.top/{locaID}.xaml"
+        ToolTip="直接复制对应地区的联网主页链接"
+        Grid.Column="1"
+        Type="Clickable">
+    </local:MyListItem>
+</Grid>
