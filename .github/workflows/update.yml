@@ -2,7 +2,7 @@ name: 更新页面
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "5,35 * * * *"
   workflow_dispatch:
 
 permissions:
