@@ -221,9 +221,15 @@ def weatherpage():
             longitude=','.join([str(c['longitude']) for c in locations]),
             attr=weather_api_url_attr
         )
-        weather_r = requests.get(full_weather_api_url)
-        weather_r.raise_for_status()
-        weather_api_data = weather_r.json()
+        try:
+            weather_r = requests.get(full_weather_api_url)
+        except Exception as e:
+            raise RuntimeError(f'weatherpage-api获取时发生错误-{e}')
+        try:
+            weather_r.raise_for_status()
+            weather_api_data = weather_r.json()
+        except Exception as e:
+            raise RuntimeError(f'weatherpage-api获取时发生错误-{e}')
         with open(os.path.join(BASE_PATH, 'data', 'weather_cache.json'), 'w', encoding='utf-8') as f:
             json.dump(weather_api_data, f)
         with open(os.path.join(BASE_PATH, 'data', 'weather_cache_time'), 'w', encoding='utf-8') as f:
