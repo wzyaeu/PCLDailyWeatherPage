@@ -216,6 +216,7 @@ def weatherpage():
         weather_cache_time = 0
     if int(time.time()) - weather_cache_time > 60*60 or\
         not os.path.exists(os.path.join(BASE_PATH, 'data', 'weather_cache.json')):
+        
         full_weather_api_url = weather_api_url_head.format(
             latitude=','.join([str(c['latitude']) for c in locations]),
             longitude=','.join([str(c['longitude']) for c in locations]),

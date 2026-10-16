@@ -28,7 +28,7 @@
     </local:MyCard>
     <local:MyHint Margin="0,8,0,2"
                   Theme="Blue"
-                  Text="选择所在的地区后需要刷新主页。目前支持全部地级行政区，可根据地名前2位汉字拼音首字母查找。"/>
+                  Text="目前支持全部地级行政区，可根据地名前2位汉字拼音首字母查找。"/>
     <Grid Margin="5">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="auto"/>
