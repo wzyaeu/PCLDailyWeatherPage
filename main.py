@@ -8,6 +8,7 @@ import secrets
 import requests
 import time
 from datetime import datetime, timezone, timedelta
+from typing import Literal, List
 
 def load_template(name, noxaml = False):
     print(f'load_template-加载模板文件-{name}')
@@ -36,6 +37,33 @@ def replaces(string: str, s: dict):
     for l, d in s.items():
         output = output.replace('{'+l+'}', str(d))
     return output
+
+def wind_speed_to_beaufort_scale(speed, contents: list[Literal['scale', 'cn']]):
+    beaufort_scale_data = {
+        'scale':{
+            (lambda x: 0 <= x < 1): '0',
+            (lambda x: 1 <= x < 6): '1',
+            (lambda x: 6 <= x < 12): '2',
+            (lambda x: 12 <= x < 20): '3',
+            (lambda x: 20 <= x < 29): '4',
+            (lambda x: 29 <= x < 39): '5',
+            (lambda x: 39 <= x < 50): '6',
+            (lambda x: 50 <= x < 62): '7',
+            (lambda x: 62 <= x): '7+',
+        },
+        'cn':{
+            (lambda x: 0 <= x < 1): '无风',
+            (lambda x: 1 <= x < 6): '软风',
+            (lambda x: 6 <= x < 12): '轻风',
+            (lambda x: 12 <= x < 20): '微风',
+            (lambda x: 20 <= x < 29): '和风',
+            (lambda x: 29 <= x < 39): '清风',
+            (lambda x: 39 <= x < 50): '强风',
+            (lambda x: 50 <= x < 62): '疾风',
+            (lambda x: 62 <= x): '强疾风',
+        },
+    }
+    return [[ctt for cdti, ctt in beaufort_scale_data.get(content, {}).items() if cdti(speed)][0] for content in contents]
 
 def escape_xaml(text):
     if text is None:
@@ -168,7 +196,14 @@ def weatherpage():
     def get_icon(qwid):
         if qwid not in icon_cache:
             print(f'weatherpage-获取icon-{qwid}')
-            icon_cache[qwid] = svg_to_path_data(requests.get(f'https://gh-proxy.org/https://raw.githubusercontent.com/qwd/Icons/refs/heads/main/icons/{qwid}.svg').text, merge=True)
+            if os.path.exists(os.path.join(BASE_PATH, 'data', 'icon', qwid)):
+                with open(os.path.join(BASE_PATH, 'data', 'icon', qwid), 'r', encoding='utf-8') as f:
+                    icon_cache[qwid] = f.read()
+            else:
+                icon_cache[qwid] = svg_to_path_data(requests.get(f'https://gh-proxy.org/https://raw.githubusercontent.com/qwd/Icons/refs/heads/main/icons/{qwid}.svg').text, merge=True)
+                os.makedirs(os.path.join(BASE_PATH, 'data', 'icon'), exist_ok=True)
+                with open(os.path.join(BASE_PATH, 'data', 'icon', qwid), 'w', encoding='utf-8') as f:
+                    f.write(icon_cache[qwid])
         return icon_cache[qwid]
         
     icon_cache = {}
@@ -261,11 +296,14 @@ def weatherpage():
                 replaces(templates['weatherpage/24h'],{
                     'time': ts_to_text(cwd['hourly']['time'][hour], '%H:%M'),
                     'temp': round(cwd['hourly']['temperature_2m'][hour]),
+                    'border_radius': '5,0,0,5' if index == 0 else ('0,5,5,0' if index == hourlylen-1 else '0'),
                     'weather_text': wmocode_to_text(cwd['hourly']['weather_code'][hour]),
                     'weather_icon': get_icon(icon_qwid(cwd['hourly']['weather_code'][hour], cwd['hourly']['is_day'][hour])),
-                    'wind': cwd['hourly']['wind_speed_10m'][hour],
+                    'wind_scale': wind_speed_to_beaufort_scale(cwd['hourly']['wind_speed_10m'][hour], ['scale'])[0],
+                    'wind_text': wind_speed_to_beaufort_scale(cwd['hourly']['wind_speed_10m'][hour], ['cn'])[0],
                     'humi': cwd['hourly']['relative_humidity_2m'][hour],
-                }) for hour in range(len(list(cwd['hourly']['time']))) # type: ignore
+                    'uv': cwd['hourly']['uv_index'][hour]
+                }) for index, hour in enumerate(range(len(list(cwd['hourly']['time'])))) if (hourlylen := len(list(cwd['hourly']['time'])))
             ]),
             '7d': '\n'.join([
                 replaces(templates['weatherpage/7d'],{
