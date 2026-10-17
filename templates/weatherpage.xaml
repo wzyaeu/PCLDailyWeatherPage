@@ -250,27 +250,7 @@
               Stroke="{DynamicResource ColorBrush3}"
               Margin="10,0"/>
     </Grid>
-    <local:MyCard
-        Margin="0,4">
-        <StackPanel Margin="10">
-            <ScrollViewer VerticalScrollBarVisibility="Disabled"
-                          HorizontalScrollBarVisibility="Auto">
-                <ScrollViewer.Resources>
-                    <Style TargetType="ScrollBar"
-                           BasedOn="{StaticResource 7DayScrollBar}"/>
-                </ScrollViewer.Resources>
-                <StackPanel Orientation="Horizontal">
-                    {24h}
-                </StackPanel>
-            </ScrollViewer>
-        </StackPanel>
-    </local:MyCard>
-    <local:MyCard
-        Margin="0,4">
-        <StackPanel Margin="10,10,10,5">
-            {7d}
-        </StackPanel>
-    </local:MyCard>
+    {template}
     <Grid Margin="5">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="auto"/>

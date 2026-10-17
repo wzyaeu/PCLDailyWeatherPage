@@ -33,7 +33,8 @@
             <TextBlock HorizontalAlignment="Center"
                        FontSize="12"
                        Foreground="{DynamicResource ColorBrush4}"
-                       Text="{wind_scale}级 {wind_text}"/>
+                       Text="{wind_scale}级 {wind_text}"
+                       ToolTip="{wind_speed}km/h"/>
             <StackPanel Margin="0,3,0,0"/>
             <TextBlock HorizontalAlignment="Center"
                        FontSize="12"

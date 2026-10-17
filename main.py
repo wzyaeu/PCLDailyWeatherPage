@@ -8,7 +8,27 @@ import secrets
 import requests
 import time
 from datetime import datetime, timezone, timedelta
-from typing import Literal, List
+from typing import Literal
+import math
+
+BASE_PATH = os.path.dirname(__file__)
+def load_all_template():
+    global templates
+    templates = {}
+    templates_path = os.path.join(BASE_PATH, 'templates')
+    for root, dirs, files in os.walk(templates_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+            print(f'load_template-加载模板文件-{os.path.join(root, file)}')
+            name = os.path.relpath(file_path, templates_path)
+            if name.endswith('.xaml'):
+                name = name[:-len('.xaml')]
+            name = name.replace('\\', '/')
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    templates[name] = f.read()
+            except Exception as e:
+                exit()
 
 def load_template(name, noxaml = False):
     print(f'load_template-加载模板文件-{name}')
@@ -64,6 +84,25 @@ def wind_speed_to_beaufort_scale(speed, contents: list[Literal['scale', 'cn']]):
         },
     }
     return [[ctt for cdti, ctt in beaufort_scale_data.get(content, {}).items() if cdti(speed)][0] for content in contents]
+
+def rain_scale(rain, contents: list[Literal['scale', 'cn']]):
+    beaufort_scale_data = {
+        'scale':{
+            (lambda x: x == 0): 0,
+            (lambda x: 0 <= x < 2.5): 1,
+            (lambda x: 2.5 <= x < 8): 2,
+            (lambda x: 8 <= x ): 3,
+        },
+        'cn':{
+            (lambda x: x == 0): '',
+            (lambda x: 0 <= x < 0.5): '毛毛雨',
+            (lambda x: 0.5 <= x < 2.5): '小雨',
+            (lambda x: 2.5 <= x < 8): '中雨',
+            (lambda x: 8 <= x < 16): '大雨',
+            (lambda x: 16 <= x ): '	强降雨',
+        },
+    }
+    return [[ctt for cdti, ctt in beaufort_scale_data.get(content, {}).items() if cdti(rain)][0] for content in contents]
 
 def escape_xaml(text):
     if text is None:
@@ -156,9 +195,6 @@ def choosepage():
     global locations
     print('choosepage-开始')
     print('choosepage-加载模板')
-    load_template('choosepage')
-    load_template('choosepage/letter_card')
-    load_template('choosepage/item')
     print('choosepage-加载数据')
     load_data('locations.json')
     locations = {}
@@ -209,37 +245,40 @@ def weatherpage():
     icon_cache = {}
     print('weatherpage-开始')
     print('weatherpage-加载模板')
-    load_template('weatherpage')
-    load_template('weatherpage/7d')
-    load_template('weatherpage/24h')
     weather_api_url_head = 'https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}{attr}'
-    weather_api_url_attr = \
-    '&current='\
-        'temperature_2m,'\
-        'relative_humidity_2m,'\
-        'weather_code,'\
-        'wind_speed_10m,'\
-        'is_day,'\
-        'apparent_temperature,'\
-        'cloud_cover'\
-    '&hourly='\
-        'temperature_2m,'\
-        'weather_code,'\
-        'wind_speed_10m,'\
-        'relative_humidity_2m,'\
-        'is_day,'\
-        'uv_index'\
-    '&daily='\
-        'relative_humidity_2m_mean,'\
-        'weather_code,'\
-        'temperature_2m_max,'\
-        'temperature_2m_min,'\
-        'wind_speed_10m_mean,'\
-        'sunrise,'\
-        'sunset'\
-    '&timezone=Asia%2FShanghai'\
-    '&timeformat=unixtime'\
-    '&forecast_hours=24'\
+    weather_api_url_attr = (lambda attr: '&'+'&'.join([f'{key}={','.join(values) if type(values) == list else values}' for key, values in attr.items()]))({
+        'current': [
+            'temperature_2m',
+            'relative_humidity_2m',
+            'weather_code',
+            'wind_speed_10m',
+            'temperature_2m',
+            'is_day',
+            'apparent_temperature',
+            'cloud_cover',
+        ],
+        'hourly': [
+            'temperature_2m',
+            'weather_code',
+            'wind_speed_10m',
+            'relative_humidity_2m',
+            'is_day',
+            'uv_index',
+            'rain',
+        ],
+        'daily': [
+            'relative_humidity_2m_mean',
+            'weather_code',
+            'temperature_2m_max',
+            'temperature_2m_min',
+            'wind_speed_10m_mean',
+            'sunrise',
+            'sunset',
+        ],
+        'timezone': 'Asia%2FShanghai',
+        'timeformat': 'unixtime',
+        'forecast_hours': '24'
+    })
     
     print('weatherpage-加载数据')
     locations = [{**ld, 'name': l} for l, ld in json.loads(data['locations']).items()]
@@ -292,8 +331,22 @@ def weatherpage():
             'now_wind': cwd['current']['wind_speed_10m'],
             'attr1_sunrise': ts_to_text(cwd['daily']['sunrise'][0], '%H:%M'),
             'attr1_sunset': ts_to_text(cwd['daily']['sunset'][0], '%H:%M'),
-            '24h': '\n'.join([
-                replaces(templates['weatherpage/24h'],{
+            'template': replaces(templates['weatherpage/template'],{
+                '7dw': '\n'.join([
+                    replaces(templates['weatherpage/7d/item'],{
+                        'date': ts_to_text(cwd['daily']['time'][day], '%m/%d'),
+                        'temp_max': round(cwd['daily']['temperature_2m_max'][day]),
+                        'temp_min': round(cwd['daily']['temperature_2m_min'][day]),
+                        'weather_text': wmocode_to_text(cwd['daily']['weather_code'][day]),
+                        'weather_icon': get_icon(icon_qwid(cwd['daily']['weather_code'][day])),
+                        'wind_scale': wind_speed_to_beaufort_scale(cwd['daily']['wind_speed_10m_mean'][day], ['scale'])[0],
+                        'wind_text': wind_speed_to_beaufort_scale(cwd['daily']['wind_speed_10m_mean'][day], ['cn'])[0],
+                        'wind_speed':cwd['daily']['wind_speed_10m_mean'][day],
+                        'humi': cwd['daily']['relative_humidity_2m_mean'][day],
+                    }) for day in range(len(list(cwd['daily']['time']))) # type: ignore
+                ]),
+
+                '24hw': '\n'.join([replaces(templates['weatherpage/24h/weather'],{
                     'time': ts_to_text(cwd['hourly']['time'][hour], '%H:%M'),
                     'temp': round(cwd['hourly']['temperature_2m'][hour]),
                     'border_radius': '5,0,0,5' if index == 0 else ('0,5,5,0' if index == hourlylen-1 else '0'),
@@ -301,21 +354,18 @@ def weatherpage():
                     'weather_icon': get_icon(icon_qwid(cwd['hourly']['weather_code'][hour], cwd['hourly']['is_day'][hour])),
                     'wind_scale': wind_speed_to_beaufort_scale(cwd['hourly']['wind_speed_10m'][hour], ['scale'])[0],
                     'wind_text': wind_speed_to_beaufort_scale(cwd['hourly']['wind_speed_10m'][hour], ['cn'])[0],
+                    'wind_speed':cwd['hourly']['wind_speed_10m'][hour],
                     'humi': cwd['hourly']['relative_humidity_2m'][hour],
                     'uv': cwd['hourly']['uv_index'][hour]
-                }) for index, hour in enumerate(range(len(list(cwd['hourly']['time'])))) if (hourlylen := len(list(cwd['hourly']['time'])))
-            ]),
-            '7d': '\n'.join([
-                replaces(templates['weatherpage/7d'],{
-                    'date': ts_to_text(cwd['daily']['time'][day], '%m/%d'),
-                    'temp_max': round(cwd['daily']['temperature_2m_max'][day]),
-                    'temp_min': round(cwd['daily']['temperature_2m_min'][day]),
-                    'weather_text': wmocode_to_text(cwd['daily']['weather_code'][day]),
-                    'weather_icon': get_icon(icon_qwid(cwd['daily']['weather_code'][day])),
-                    'wind': cwd['daily']['wind_speed_10m_mean'][day],
-                    'humi': cwd['daily']['relative_humidity_2m_mean'][day],
-                }) for day in range(len(list(cwd['daily']['time']))) # type: ignore
-            ]),
+                }) for index, hour in enumerate(range(len(list(cwd['hourly']['time'])))) if (hourlylen := len(list(cwd['hourly']['time'])))]),
+                '24hr_max':(rain_max := (math.ceil(max(cwd['hourly']['rain']) / 0.5) * 0.5 if max(cwd['hourly']['rain']) > 0 else 0.0)),
+                '24hr_median':rain_max / 2,
+                '24hr': '\n'.join([replaces(templates['weatherpage/24h/rain'],{
+                    'time': ts_to_text(cwd['hourly']['time'][hour], '%H:%M'),
+                    'rain': cwd['hourly']['rain'][hour],
+                    'h': round(80/rain_max*cwd['hourly']['rain'][hour], 1) if rain_max > 0 else 0
+                }) for index, hour in enumerate(range(len(list(cwd['hourly']['time']))))]),
+            }),
             'sponsors':'\n'.join([replaces(templates['sponsors'],{
                 'sponsor': s
             }) for s in sponsors])
@@ -325,12 +375,12 @@ def weatherpage():
         save_output_file(f'{locations[index]['id']}.xaml.ini',BUILD_VERSION)
 
 def init():
+    load_all_template()
     print('init-初始化中')
     global OUTPUT_PATH, BASE_PATH, BUILD_VERSION, templates, ncm, test_environment, data, sponsors
     templates = {}
     data = {}
     BUILD_VERSION = secrets.token_hex(4)
-    BASE_PATH = os.path.dirname(__file__)
     OUTPUT_PATH = os.path.join(BASE_PATH,'output')
     shutil.rmtree(OUTPUT_PATH,ignore_errors=True)
     os.makedirs(OUTPUT_PATH,exist_ok=True)
@@ -338,6 +388,8 @@ def init():
     sponsors = requests.get('https://v4.gh-proxy.org/https://github.com/wzyaeu/IfadianSponsorGet/raw/refs/heads/pagedata/output.json').json()
 
     test_environment = os.path.exists(os.path.join(BASE_PATH,'test_environment'))
+
+    load_all_template()
 
     print('init-运行choosepage')
     choosepage()
