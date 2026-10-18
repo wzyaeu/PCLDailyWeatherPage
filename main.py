@@ -361,14 +361,14 @@ def weatherpage():
                     'wind_speed':cwd['hourly']['wind_speed_10m'][hour],
                     'humi': cwd['hourly']['relative_humidity_2m'][hour],
                     'uv': cwd['hourly']['uv_index'][hour]
-                }) for index, hour in enumerate(range(len(list(cwd['hourly']['time'])))) if (hourlylen := len(list(cwd['hourly']['time'])))]),
+                }) for index, hour in enumerate(range(len(list(cwd['hourly']['time'])[:24]))) if (hourlylen := len(list(cwd['hourly']['time'])))]),
                 '24hr_max':(rain_max := (math.ceil(max(cwd['hourly']['rain']) / 0.5) * 0.5 if max(cwd['hourly']['rain']) > 0 else 0.0)),
                 '24hr_median':rain_max / 2,
                 '24hr': '\n'.join([replaces(templates['weatherpage/24h/rain'],{
                     'time': ts_to_text(cwd['hourly']['time'][hour], '%H:%M'),
                     'rain': cwd['hourly']['rain'][hour],
                     'h': round(80/rain_max*cwd['hourly']['rain'][hour], 1) if rain_max > 0 else 0
-                }) for index, hour in enumerate(range(len(list(cwd['hourly']['time']))))]),
+                }) for index, hour in enumerate(range(len(list(cwd['hourly']['time'])[:24])))]),
             }),
             'sponsors':'\n'.join([replaces(templates['sponsors'],{
                 'sponsor': s
