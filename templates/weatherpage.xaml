@@ -183,7 +183,20 @@
                         <TextBlock FontSize="15"
                                    Margin="5,0,0,0"
                                    Foreground="{DynamicResource ColorBrush3}"
-                                   Text="{now_wind}km/h"/>
+                                   Text="{now_wind_scale}级 {now_wind_text}"
+                                   ToolTip="{now_wind_speed}km/h"/>
+                    </StackPanel>
+                    <StackPanel
+                        Orientation="Horizontal"
+                        Margin="0,1">
+                        <TextBlock FontSize="15"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource ColorBrush3}"
+                                   Text="相对湿度"/>
+                        <TextBlock FontSize="15"
+                                   Margin="5,0,0,0"
+                                   Foreground="{DynamicResource ColorBrush3}"
+                                   Text="{now_humi}%"/>
                     </StackPanel>
                 </StackPanel>
             </Grid>
