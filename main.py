@@ -10,6 +10,7 @@ import time
 from datetime import datetime, timezone, timedelta
 from typing import Literal
 import math
+from pprint import pprint
 
 BASE_PATH = os.path.dirname(__file__)
 def load_all_template():
@@ -229,6 +230,31 @@ def choosepage():
     save_output_file('choose.xaml.ini',BUILD_VERSION)
 
 def weatherpage():
+    global statisticsdata
+    statisticsdata = {
+        'now': {
+            'temp': {
+                'max': (0, None),
+                'min': (0, None),
+            },
+            'wind': (0, None),
+            'weather': {
+
+            }
+        },
+        'today': {
+            'temp': {
+                'max': (0, None),
+                'min': (0, None),
+            },
+            'tempdiff': ((0, 0), None),
+            'wind': (0, None),
+            'weather': {
+
+            }
+        }
+    }
+
     def get_icon(qwid):
         if qwid not in icon_cache:
             print(f'weatherpage-获取icon-{qwid}')
@@ -378,6 +404,69 @@ def weatherpage():
         save_output_file(f'{locations[index]['id']}.xaml',output)
         save_output_file(f'{locations[index]['id']}.xaml.ini',BUILD_VERSION)
 
+        if cwd['current']['temperature_2m'] > statisticsdata['now']['temp']['max'][0]:
+            statisticsdata['now']['temp']['max'] = (cwd['current']['temperature_2m'], locations[index]['name'])
+        if cwd['current']['temperature_2m'] < statisticsdata['now']['temp']['min'][0]:
+            statisticsdata['now']['temp']['min'] = (cwd['current']['temperature_2m'], locations[index]['name'])
+        if cwd['current']['wind_speed_10m'] > statisticsdata['now']['wind'][0]:
+            statisticsdata['now']['wind'] = (cwd['current']['wind_speed_10m'], locations[index]['name'])
+        if cwd['current']['weather_code'] not in statisticsdata['now']['weather']:
+            statisticsdata['now']['weather'][cwd['current']['weather_code']] = 0
+        statisticsdata['now']['weather'][cwd['current']['weather_code']] += 1
+        
+        for today_temp in (cwd['daily']['temperature_2m_max'][0], cwd['daily']['temperature_2m_min'][0]):
+            if today_temp > statisticsdata['today']['temp']['max'][0]:
+                statisticsdata['today']['temp']['max'] = (today_temp, locations[index]['name'])
+            if today_temp < statisticsdata['today']['temp']['min'][0]:
+                statisticsdata['today']['temp']['min'] = (today_temp, locations[index]['name'])
+        if (cwd['daily']['temperature_2m_max'][0] - cwd['daily']['temperature_2m_min'][0]) > \
+            (statisticsdata['today']['tempdiff'][0][0] - statisticsdata['today']['tempdiff'][0][1]):
+            statisticsdata['today']['tempdiff'] = ((cwd['daily']['temperature_2m_max'][0], cwd['daily']['temperature_2m_min'][0]), locations[index]['name'])
+        if cwd['daily']['wind_speed_10m_mean'][0] > statisticsdata['today']['wind'][0]:
+            statisticsdata['today']['wind'] = (cwd['daily']['wind_speed_10m_mean'][0], locations[index]['name'])
+        if cwd['daily']['weather_code'][0] not in statisticsdata['today']['weather']:
+            statisticsdata['today']['weather'][cwd['daily']['weather_code'][0]] = 0
+        statisticsdata['today']['weather'][cwd['daily']['weather_code'][0]] += 1
+
+def statisticspage():
+    global statisticsdata
+    print(f'statisticspage-构建页面')
+    now = datetime.now(timezone(timedelta(hours=8)))
+    output = replaces(templates['statisticspage'],{
+        'date': now.strftime("%m/%d"),
+        'now_temp_max': str(statisticsdata['now']['temp']['max'][0])+'° '+statisticsdata['now']['temp']['max'][1],
+        'now_temp_min': str(statisticsdata['now']['temp']['min'][0])+'° '+statisticsdata['now']['temp']['min'][1],
+        'now_wind': str(statisticsdata['now']['wind'][0])+'km/h '+statisticsdata['now']['wind'][1],
+        '': (
+            now_weather_list := sorted(list(statisticsdata['now']['weather'].items()), key=lambda x: x[1], reverse=True),
+            now_weather_list_item := lambda n: (wmocode_to_text(now_weather_list[n][0])+' '+str(now_weather_list[n][1])+'个地区') if len(now_weather_list) >= n+1 else ''
+        ),
+        'now_weather_1': now_weather_list_item(0),
+        'now_weather_2': now_weather_list_item(1),
+        'now_weather_3': now_weather_list_item(2),
+        'now_weather_4': now_weather_list_item(3),
+        'now_weather_5': now_weather_list_item(4),
+        'today_temp_max': str(statisticsdata['today']['temp']['max'][0])+'° '+statisticsdata['today']['temp']['max'][1],
+        'today_temp_min': str(statisticsdata['today']['temp']['min'][0])+'° '+statisticsdata['today']['temp']['min'][1],
+        'today_tempdiff': str(statisticsdata['today']['tempdiff'][0][0]-statisticsdata['today']['tempdiff'][0][1])+'° '+statisticsdata['today']['tempdiff'][1],
+        'today_wind': str(statisticsdata['today']['wind'][0])+'km/h '+statisticsdata['today']['wind'][1],
+        '': (
+            today_weather_list := sorted(list(statisticsdata['today']['weather'].items()), key=lambda x: x[1], reverse=True),
+            today_weather_list_item := lambda n: (wmocode_to_text(today_weather_list[n][0])+' '+str(today_weather_list[n][1])+'个地区') if len(today_weather_list) >= n+1 else ''
+        ),
+        'today_weather_1': today_weather_list_item(0),
+        'today_weather_2': today_weather_list_item(1),
+        'today_weather_3': today_weather_list_item(2),
+        'today_weather_4': today_weather_list_item(3),
+        'today_weather_5': today_weather_list_item(4),
+        'sponsors':'\n'.join([replaces(templates['sponsors'],{
+            'sponsor': s
+        }) for s in sponsors])
+    })
+    print('statisticspage-保存输出文件')
+    save_output_file(f'statistics.xaml',output)
+    save_output_file(f'statistics.xaml.ini',BUILD_VERSION)
+
 def init():
     load_all_template()
     print('init-初始化中')
@@ -389,9 +478,12 @@ def init():
     shutil.rmtree(OUTPUT_PATH,ignore_errors=True)
     os.makedirs(OUTPUT_PATH,exist_ok=True)
     os.makedirs(os.path.join(BASE_PATH,'data'),exist_ok=True)
-    sponsors = requests.get('https://v4.gh-proxy.org/https://github.com/wzyaeu/IfadianSponsorGet/raw/refs/heads/pagedata/output.json').json()
-
     test_environment = os.path.exists(os.path.join(BASE_PATH,'test_environment'))
+    if test_environment:
+        sponsors = []
+    else:
+        sponsors = requests.get('https://v4.gh-proxy.org/https://github.com/wzyaeu/IfadianSponsorGet/raw/refs/heads/pagedata/output.json').json()
+
 
     load_all_template()
 
@@ -400,5 +492,8 @@ def init():
 
     print('init-运行weatherpage')
     weatherpage()
+
+    print('init-statisticspage')
+    statisticspage()
 
 init()

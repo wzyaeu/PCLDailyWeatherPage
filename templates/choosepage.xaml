@@ -49,6 +49,29 @@
               Stroke="{DynamicResource ColorBrush3}"
               Margin="10,0"/>
     </Grid>
+    <local:MyCard
+        Margin="0,4">
+        <StackPanel Margin="10,5,10,5">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <local:MyListItem
+                    Title="统计页"
+                    ToolTip="统计全国天气数据"
+                    Type="Clickable">
+                    <local:CustomEventService.Events>
+                        <local:CustomEventCollection>
+                            <local:CustomEvent Type="修改变量"
+                                               Data="PCLDailyWeatherPage|statistics|-"/>
+                            <local:CustomEvent Type="刷新主页"
+                                               Data="-"/>
+                        </local:CustomEventCollection>
+                    </local:CustomEventService.Events>
+                </local:MyListItem>
+            </Grid>
+        </StackPanel>
+    </local:MyCard>
     {letter_card}
     <Grid Margin="5">
         <Grid.ColumnDefinitions>
