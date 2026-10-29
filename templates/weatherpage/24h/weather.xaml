@@ -1,46 +1,65 @@
-<StackPanel>
+<StackPanel Width="45">
     <TextBlock HorizontalAlignment="Center"
                FontSize="12"
                Foreground="{DynamicResource ColorBrush1}"
                Text="{time}"/>
-    <Border Background="{DynamicResource ColorBrush7}"
-            CornerRadius="{border_radius}"
-            Margin="0,4,0,0">
-        <StackPanel Orientation="Horizontal"
-                    Margin="4,5">
-            <TextBlock Margin="0,0,2,0"
-                       VerticalAlignment="Center"
-                       FontSize="22"
-                       Foreground="{DynamicResource ColorBrush3}"
-                       Text="{temp}°"/>
-            <Border
-                ToolTip="{weather_text}"
-                HorizontalAlignment="Center"
-                Background="{DynamicResource ColorBrush7}">
-                <Path Margin="0"
-                      Width="25"
-                      Height="25"
-                      Stretch="Uniform"
-                      Fill="{DynamicResource ColorBrush3}"
-                      Data="{weather_icon}"/>
-            </Border>
-        </StackPanel>
-    </Border>
-    <Border Background="{DynamicResource ColorBrush7}"
-            CornerRadius="{border_radius}"
-            Margin="0,4,0,0">
-        <StackPanel Margin="5">
-            <TextBlock HorizontalAlignment="Center"
-                       FontSize="12"
-                       Foreground="{DynamicResource ColorBrush4}"
-                       Text="{wind_scale}级 {wind_text}"
-                       ToolTip="{wind_speed}km/h"/>
-            <StackPanel Margin="0,3,0,0"/>
-            <TextBlock HorizontalAlignment="Center"
-                       FontSize="12"
-                       Foreground="{DynamicResource ColorBrush4}"
-                       Text="{humi}%/{uv}"
-                       ToolTip="湿度/紫外线"/>
-        </StackPanel>
-    </Border>
+    <StackPanel Margin="4,5">
+        <Border
+            ToolTip="{weather_text}"
+            HorizontalAlignment="Center"
+            CornerRadius="5"
+            Background="{DynamicResource ColorBrush8}">
+            <Path Margin="3"
+                  Width="20"
+                  Height="20"
+                  Stretch="Uniform"
+                  Fill="{DynamicResource ColorBrush3}"
+                  Data="{weather_icon}"/>
+        </Border>
+        <TextBlock Margin="0,5,0,0"
+                   HorizontalAlignment="Center"
+                   FontSize="17"
+                   Foreground="{DynamicResource ColorBrush3}"
+                   Text="{temp}°"/>
+    </StackPanel>
+    <Grid Height="50" Width="45">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+        <Line X1="22.5"
+              Y1="0"
+              X2="0"
+              Y2="{l1_y}"
+              Grid.Column="0"
+              StrokeThickness="2"
+              Margin="-1,0,-1,{l1_mag}"
+              VerticalAlignment="Bottom"
+              Visibility="{l1_vis}"
+              Stroke="{DynamicResource ColorBrush4}"
+              Opacity="{l_c}"/>
+        <Line X1="22.5"
+              Y1="0"
+              X2="0"
+              Y2="{l2_y}"
+              Grid.Column="1"
+              StrokeThickness="2"
+              Margin="-1,0,-1,{l2_mag}"
+              VerticalAlignment="Bottom"
+              Visibility="{l2_vis}"
+              Stroke="{DynamicResource ColorBrush4}"
+              Opacity="{l_c}"/>
+    </Grid>
+    <StackPanel Margin="5">
+        <TextBlock HorizontalAlignment="Center"
+                   FontSize="12"
+                   Foreground="{DynamicResource ColorBrush4}"
+                   Text="{wind_scale}级"
+                   ToolTip="{wind_speed}km/h"/>
+        <TextBlock HorizontalAlignment="Center"
+                   FontSize="12"
+                   Foreground="{DynamicResource ColorBrush4}"
+                   Text="{humi}%"
+                   ToolTip="湿度"/>
+    </StackPanel>
 </StackPanel>

@@ -11,6 +11,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Literal
 import math
 from pprint import pprint
+from decimal import Decimal, ROUND_HALF_UP
 
 BASE_PATH = os.path.dirname(__file__)
 def load_all_template():
@@ -116,6 +117,17 @@ def escape_xaml(text):
              .replace(''', '&apos;')
     )
 
+def _round(number, ndigits=0):
+    if ndigits < 0:
+        ndigits = 0
+
+    d = Decimal(str(number))
+    rounded = d.quantize(
+        Decimal('1e-{}'.format(ndigits)),
+        rounding=ROUND_HALF_UP
+    )
+    return float(rounded) if ndigits != 0 else int(rounded)
+
 def ts_to_text(ts, fm):
     return datetime.fromtimestamp(ts, tz=timezone(timedelta(hours=8))).strftime(fm)
 
@@ -191,6 +203,42 @@ def wmocode_to_text(code: int) -> str:
 
 def iso_to_timestamp(iso_str):
     return int(datetime.fromisoformat(iso_str.replace('Z', '+00:00')).timestamp())
+
+def line_chart(htdata, index):
+    tmax = max(htdata)
+    tmin = min(htdata)
+    if tmax-tmin < 3:
+        tmin = tmin - (3 - (tmax-tmin))
+    hpt = 40/(tmax-tmin)
+    # l1
+    if index != 0:
+        l1_y = (htdata[index]-htdata[index-1])/2*hpt
+        l1_mag = (min(htdata[index], abs(htdata[index]-htdata[index-1])/2+min(htdata[index], htdata[index-1]))-tmin)*hpt+5
+        l1_vis = 'Visible'
+    else:
+        l1_y = 0
+        l1_mag = 0
+        l1_vis = 'Collapsed'
+    # l2
+    if index != len(htdata)-1:
+        l2_y = (htdata[index+1]-htdata[index])/2*hpt
+        l2_mag = (min(htdata[index], abs(htdata[index+1]-htdata[index])/2+min(htdata[index], htdata[index+1]))-tmin)*hpt+5
+        l2_vis = 'Visible'
+    else:
+        l2_y = 0
+        l2_mag = 0
+        l2_vis = 'Collapsed'
+    # lc
+    l_c_r = htdata[index] / tmax 
+    return {
+        'l1_y': l1_y,
+        'l1_mag': l1_mag,
+        'l1_vis': l1_vis,
+        'l2_y': l2_y,
+        'l2_mag': l2_mag,
+        'l2_vis': l2_vis,
+        'l_c': l_c_r
+    }
 
 def choosepage():
     global locations
@@ -333,7 +381,7 @@ def weatherpage():
         except Exception as e:
             raise RuntimeError(f'weatherpage-api获取时发生错误-{e}')
         with open(os.path.join(BASE_PATH, 'data', 'weather_cache.json'), 'w', encoding='utf-8') as f:
-            json.dump(weather_api_data, f)
+            json.dump(weather_api_data, f, ensure_ascii=False)
         with open(os.path.join(BASE_PATH, 'data', 'weather_cache_time'), 'w', encoding='utf-8') as f:
             f.write(str(int(time.time())))
     else:
@@ -347,11 +395,11 @@ def weatherpage():
             'city': locations[index]['name'],
             'now_updatetime': now.strftime("%m/%d %H:%M:%S"),
             'now_weather_icon': get_icon(icon_qwid(cwd['current']['weather_code'], cwd['current']['is_day'])),
-            'now_temp': round(cwd['current']['temperature_2m']),
+            'now_temp': _round(cwd['current']['temperature_2m']),
             'now_weather': wmocode_to_text(cwd['current']['weather_code']),
-            'today_temp_max': round(cwd['daily']['temperature_2m_max'][0]),
-            'today_temp_min': round(cwd['daily']['temperature_2m_min'][0]),
-            'now_temp_feel': round(cwd['current']['apparent_temperature']),
+            'today_temp_max': _round(cwd['daily']['temperature_2m_max'][0]),
+            'today_temp_min': _round(cwd['daily']['temperature_2m_min'][0]),
+            'now_temp_feel': _round(cwd['current']['apparent_temperature']),
             'now_uv': cwd['hourly']['uv_index'][0],
             'now_humi': cwd['current']['relative_humidity_2m'],
             'now_cloud': cwd['current']['cloud_cover'],
@@ -365,8 +413,8 @@ def weatherpage():
                 '7dw': '\n'.join([
                     replaces(templates['weatherpage/7d/item'],{
                         'date': ts_to_text(cwd['daily']['time'][day], '%m/%d'),
-                        'temp_max': round(cwd['daily']['temperature_2m_max'][day]),
-                        'temp_min': round(cwd['daily']['temperature_2m_min'][day]),
+                        'temp_max': _round(cwd['daily']['temperature_2m_max'][day]),
+                        'temp_min': _round(cwd['daily']['temperature_2m_min'][day]),
                         'weather_text': wmocode_to_text(cwd['daily']['weather_code'][day]),
                         'weather_icon': get_icon(icon_qwid(cwd['daily']['weather_code'][day])),
                         'wind_scale': wind_speed_to_beaufort_scale(cwd['daily']['wind_speed_10m_mean'][day], ['scale'])[0],
@@ -375,10 +423,10 @@ def weatherpage():
                         'humi': cwd['daily']['relative_humidity_2m_mean'][day],
                     }) for day in range(len(list(cwd['daily']['time']))) # type: ignore
                 ]),
-
+                'htdata': (htdata := list(cwd['hourly']['temperature_2m'])[:24]) ,
                 '24hw': '\n'.join([replaces(templates['weatherpage/24h/weather'],{
                     'time': ts_to_text(cwd['hourly']['time'][hour], '%H:%M'),
-                    'temp': round(cwd['hourly']['temperature_2m'][hour]),
+                    'temp': _round(cwd['hourly']['temperature_2m'][hour]),
                     'border_radius': '5,0,0,5' if index == 0 else ('0,5,5,0' if index == hourlylen-1 else '0'),
                     'weather_text': wmocode_to_text(cwd['hourly']['weather_code'][hour]),
                     'weather_icon': get_icon(icon_qwid(cwd['hourly']['weather_code'][hour], cwd['hourly']['is_day'][hour])),
@@ -386,14 +434,22 @@ def weatherpage():
                     'wind_text': wind_speed_to_beaufort_scale(cwd['hourly']['wind_speed_10m'][hour], ['cn'])[0],
                     'wind_speed':cwd['hourly']['wind_speed_10m'][hour],
                     'humi': cwd['hourly']['relative_humidity_2m'][hour],
-                    'uv': cwd['hourly']['uv_index'][hour]
+                    'uv': cwd['hourly']['uv_index'][hour],
+                    '': (line_chart_data := line_chart(htdata, index)),
+                    'l1_y': line_chart_data['l1_y'],
+                    'l1_mag': line_chart_data['l1_mag'],
+                    'l1_vis': line_chart_data['l1_vis'],
+                    'l2_y': line_chart_data['l2_y'],
+                    'l2_mag': line_chart_data['l2_mag'],
+                    'l2_vis': line_chart_data['l2_vis'],
+                    'l_c': line_chart_data['l_c']
                 }) for index, hour in enumerate(range(len(list(cwd['hourly']['time'])[:24]))) if (hourlylen := len(list(cwd['hourly']['time'])))]),
                 '24hr_max':(rain_max := (math.ceil(max(cwd['hourly']['rain']) / 0.5) * 0.5 if max(cwd['hourly']['rain']) > 0 else 0.0)),
                 '24hr_median':rain_max / 2,
                 '24hr': '\n'.join([replaces(templates['weatherpage/24h/rain'],{
                     'time': ts_to_text(cwd['hourly']['time'][hour], '%H:%M'),
                     'rain': cwd['hourly']['rain'][hour],
-                    'h': round(80/rain_max*cwd['hourly']['rain'][hour], 1) if rain_max > 0 else 0
+                    'h': _round(80/rain_max*cwd['hourly']['rain'][hour], 1) if rain_max > 0 else 0
                 }) for index, hour in enumerate(range(len(list(cwd['hourly']['time'])[:24])))]),
             }),
             'sponsors':'\n'.join([replaces(templates['sponsors'],{
