@@ -6,7 +6,9 @@ import shutil
 import json
 import secrets
 import requests
+import re
 import time
+import random
 from datetime import datetime, timezone, timedelta
 from typing import Literal
 import math
@@ -50,9 +52,12 @@ def load_data(name):
 
 def save_output_file(name, data):
     print(f'save_output_file-保存输出文件-{name}')
-    o_path = os.path.join(BASE_PATH, 'output', name)
+    o_path = os.path.join(OUTPUT_PATH, name)
     with open(o_path,'w', encoding='utf-8') as f:
-        f.write(data)
+        if name.endswith('.xaml'):
+            f.write(re.sub(r'\n\s*', ' ', data))
+        else:
+            f.write(data)
 
 def replaces(string: str, s: dict):
     output = string
@@ -228,8 +233,12 @@ def line_chart(htdata, index):
         l2_y = 0
         l2_mag = 0
         l2_vis = 'Collapsed'
-    # lc
-    l_c_r = htdata[index] / tmax 
+    # cb
+    cb_mag = (htdata[index]-tmin)*hpt+3
+    # tt
+    tt_mag = (tmax-htdata[index])*hpt
+    # tc
+    tc_mag = (htdata[index]-tmin)*hpt+3
     return {
         'l1_y': l1_y,
         'l1_mag': l1_mag,
@@ -237,7 +246,9 @@ def line_chart(htdata, index):
         'l2_y': l2_y,
         'l2_mag': l2_mag,
         'l2_vis': l2_vis,
-        'l_c': l_c_r
+        'cb_mag': cb_mag,
+        'tt_mag': tt_mag,
+        'tc_mag': tc_mag
     }
 
 def choosepage():
@@ -339,7 +350,7 @@ def weatherpage():
             'relative_humidity_2m',
             'is_day',
             'uv_index',
-            'rain',
+            'precipitation',
         ],
         'daily': [
             'relative_humidity_2m_mean',
@@ -442,14 +453,16 @@ def weatherpage():
                     'l2_y': line_chart_data['l2_y'],
                     'l2_mag': line_chart_data['l2_mag'],
                     'l2_vis': line_chart_data['l2_vis'],
-                    'l_c': line_chart_data['l_c']
+                    'cb_mag': line_chart_data['cb_mag'],
+                    'tt_mag': line_chart_data['tt_mag'],
+                    'tc_mag': line_chart_data['tc_mag'],
                 }) for index, hour in enumerate(range(len(list(cwd['hourly']['time'])[:24]))) if (hourlylen := len(list(cwd['hourly']['time'])))]),
-                '24hr_max':(rain_max := (math.ceil(max(cwd['hourly']['rain']) / 0.5) * 0.5 if max(cwd['hourly']['rain']) > 0 else 0.0)),
+                '24hr_max':(rain_max := (math.ceil(max(cwd['hourly']['precipitation']) / 0.5) * 0.5 if max(cwd['hourly']['precipitation']) > 0 else 0.0)),
                 '24hr_median':rain_max / 2,
                 '24hr': '\n'.join([replaces(templates['weatherpage/24h/rain'],{
                     'time': ts_to_text(cwd['hourly']['time'][hour], '%H:%M'),
-                    'rain': cwd['hourly']['rain'][hour],
-                    'h': _round(80/rain_max*cwd['hourly']['rain'][hour], 1) if rain_max > 0 else 0
+                    'rain': cwd['hourly']['precipitation'][hour],
+                    'h': _round(80/rain_max*cwd['hourly']['precipitation'][hour], 1) if rain_max > 0 else 0
                 }) for index, hour in enumerate(range(len(list(cwd['hourly']['time'])[:24])))]),
             }),
             'sponsors':'\n'.join([replaces(templates['sponsors'],{
@@ -530,15 +543,16 @@ def init():
     templates = {}
     data = {}
     BUILD_VERSION = secrets.token_hex(4)
-    OUTPUT_PATH = os.path.join(BASE_PATH,'output')
-    shutil.rmtree(OUTPUT_PATH,ignore_errors=True)
-    os.makedirs(OUTPUT_PATH,exist_ok=True)
     os.makedirs(os.path.join(BASE_PATH,'data'),exist_ok=True)
     test_environment = os.path.exists(os.path.join(BASE_PATH,'test_environment'))
     if test_environment:
         sponsors = []
+        OUTPUT_PATH = os.path.join(BASE_PATH,'test_output')
     else:
         sponsors = requests.get('https://v4.gh-proxy.org/https://github.com/wzyaeu/IfadianSponsorGet/raw/refs/heads/pagedata/output.json').json()
+        OUTPUT_PATH = os.path.join(BASE_PATH,'output')
+    shutil.rmtree(OUTPUT_PATH,ignore_errors=True)
+    os.makedirs(OUTPUT_PATH,exist_ok=True)
 
 
     load_all_template()

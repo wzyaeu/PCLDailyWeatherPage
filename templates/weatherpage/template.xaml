@@ -88,92 +88,94 @@
         </local:MyCard>
     </TabItem>
 
-    <TabItem Header="24h降雨">
-        <local:MyCard>
-            <Grid Margin="10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="auto"/>
-                    <ColumnDefinition Width="1*"/>
-                </Grid.ColumnDefinitions>
-                <Grid Margin="0,0,2,0"
-                      Height="80"
-                      VerticalAlignment="Top">
+    <TabItem Header="24h降水">
+        <StackPanel>
+            <local:MyCard>
+                <Grid Margin="10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="auto"/>
-                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="1*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock VerticalAlignment="Center"
-                               FontSize="12"
-                               Margin="0,0,4,0"
-                               Foreground="{DynamicResource ColorBrush1}"
-                               Text="毫米/mm">
-                        <TextBlock.LayoutTransform>
-                            <RotateTransform Angle="-90"/>
-                        </TextBlock.LayoutTransform>
-                    </TextBlock>
-                    <StackPanel Orientation="Horizontal"
-                                VerticalAlignment="Top"
-                                HorizontalAlignment="Right"
-                                Grid.Column="1">
+                    <Grid Margin="0,0,2,0"
+                          Height="80"
+                          VerticalAlignment="Top">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="auto"/>
+                        </Grid.ColumnDefinitions>
                         <TextBlock VerticalAlignment="Center"
                                    FontSize="12"
-                                   Margin="0,0,3,0"
+                                   Margin="0,0,4,0"
                                    Foreground="{DynamicResource ColorBrush1}"
-                                   Text="{24hr_max}"/>
-                        <Border Background="{DynamicResource ColorBrush1}"
-                                CornerRadius="2"
-                                VerticalAlignment="Center"
-                                Width="10"
-                                Height="2">
-                        </Border>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal"
-                                VerticalAlignment="Center"
-                                HorizontalAlignment="Right"
-                                Grid.Column="1">
-                        <TextBlock VerticalAlignment="Center"
-                                   FontSize="12"
-                                   Margin="0,0,3,0"
-                                   Foreground="{DynamicResource ColorBrush1}"
-                                   Text="{24hr_median}"/>
-                        <Border Background="{DynamicResource ColorBrush1}"
-                                CornerRadius="2"
-                                VerticalAlignment="Center"
-                                Width="10"
-                                Height="2">
-                        </Border>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal"
-                                VerticalAlignment="Bottom"
-                                HorizontalAlignment="Right"
-                                Grid.Column="1">
-                        <TextBlock VerticalAlignment="Center"
-                                   FontSize="12"
-                                   Margin="0,0,3,0"
-                                   Foreground="{DynamicResource ColorBrush1}"
-                                   Text="0.0"/>
-                        <Border Background="{DynamicResource ColorBrush1}"
-                                CornerRadius="2"
-                                VerticalAlignment="Center"
-                                Width="10"
-                                Height="2">
-                        </Border>
-                    </StackPanel>
+                                   Text="毫米/mm">
+                            <TextBlock.LayoutTransform>
+                                <RotateTransform Angle="-90"/>
+                            </TextBlock.LayoutTransform>
+                        </TextBlock>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Top"
+                                    HorizontalAlignment="Right"
+                                    Grid.Column="1">
+                            <TextBlock VerticalAlignment="Center"
+                                       FontSize="12"
+                                       Margin="0,0,3,0"
+                                       Foreground="{DynamicResource ColorBrush1}"
+                                       Text="{24hr_max}"/>
+                            <Border Background="{DynamicResource ColorBrush1}"
+                                    CornerRadius="2"
+                                    VerticalAlignment="Center"
+                                    Width="10"
+                                    Height="2">
+                            </Border>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Right"
+                                    Grid.Column="1">
+                            <TextBlock VerticalAlignment="Center"
+                                       FontSize="12"
+                                       Margin="0,0,3,0"
+                                       Foreground="{DynamicResource ColorBrush1}"
+                                       Text="{24hr_median}"/>
+                            <Border Background="{DynamicResource ColorBrush1}"
+                                    CornerRadius="2"
+                                    VerticalAlignment="Center"
+                                    Width="10"
+                                    Height="2">
+                            </Border>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Bottom"
+                                    HorizontalAlignment="Right"
+                                    Grid.Column="1">
+                            <TextBlock VerticalAlignment="Center"
+                                       FontSize="12"
+                                       Margin="0,0,3,0"
+                                       Foreground="{DynamicResource ColorBrush1}"
+                                       Text="0.0"/>
+                            <Border Background="{DynamicResource ColorBrush1}"
+                                    CornerRadius="2"
+                                    VerticalAlignment="Center"
+                                    Width="10"
+                                    Height="2">
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                    <ScrollViewer VerticalScrollBarVisibility="Disabled"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  Grid.Column="1">
+                        <ScrollViewer.Resources>
+                            <Style TargetType="ScrollBar"
+                                   BasedOn="{StaticResource 7DayScrollBar}"/>
+                        </ScrollViewer.Resources>
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="12,0,0,0">
+                            {24hr}
+                        </StackPanel>
+                    </ScrollViewer>
                 </Grid>
-                <ScrollViewer VerticalScrollBarVisibility="Disabled"
-                              HorizontalScrollBarVisibility="Auto"
-                        Grid.Column="1">
-                    <ScrollViewer.Resources>
-                        <Style TargetType="ScrollBar"
-                               BasedOn="{StaticResource 7DayScrollBar}"/>
-                    </ScrollViewer.Resources>
-                    <StackPanel Orientation="Horizontal"
-                            Margin="12,0,0,0">
-                        {24hr}
-                    </StackPanel>
-                </ScrollViewer>
-            </Grid>
-        </local:MyCard>
+            </local:MyCard>
+        </StackPanel>
     </TabItem>
     <TabItem Header="7d天气"
              IsSelected="True">
