@@ -18,13 +18,30 @@
         </Border>
     </StackPanel>
     <Grid>
+        <Border Background="{DynamicResource ColorBrush6}"
+                CornerRadius="5,5,0,0"
+                Margin="0,0,0,0"
+                VerticalAlignment="Bottom"
+                Height="{h}"/>
+        <StackPanel HorizontalAlignment="Center"
+                    VerticalAlignment="Top"
+                Margin="0,{rt_mag},0,0"
+                    Orientation="Horizontal">
+            <TextBlock FontSize="12"
+                       Foreground="{DynamicResource ColorBrush4}"
+                       Text="{rain}"/>
+            <TextBlock FontSize="9"
+                       Margin="0,3.5,0,0"
+                       Foreground="{DynamicResource ColorBrush4}"
+                       Text="mm"/>
+        </StackPanel>
         <TextBlock Margin="0,{tt_mag},0,0"
                    HorizontalAlignment="Center"
                    FontSize="17"
                    Foreground="{DynamicResource ColorBrush3}"
                    Text="{temp}°"/>
         <Grid Height="50"
-              Margin="0,20,0,0"
+              Margin="0,20,0,13"
               Width="45">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -64,7 +81,7 @@
             </Border>
         </Grid>
     </Grid>
-    <StackPanel Margin="5">
+    <StackPanel Margin="5,5,5,0">
         <TextBlock HorizontalAlignment="Center"
                    FontSize="12"
                    Foreground="{DynamicResource ColorBrush4}"

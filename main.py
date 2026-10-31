@@ -237,6 +237,8 @@ def line_chart(htdata, index):
     cb_mag = (htdata[index]-tmin)*hpt+3
     # tt
     tt_mag = (tmax-htdata[index])*hpt
+    # rt
+    rt_mag = tt_mag+29
     # tc
     tc_mag = (htdata[index]-tmin)*hpt+3
     return {
@@ -248,6 +250,7 @@ def line_chart(htdata, index):
         'l2_vis': l2_vis,
         'cb_mag': cb_mag,
         'tt_mag': tt_mag,
+        'rt_mag': rt_mag,
         'tc_mag': tc_mag
     }
 
@@ -435,6 +438,7 @@ def weatherpage():
                     }) for day in range(len(list(cwd['daily']['time']))) # type: ignore
                 ]),
                 'htdata': (htdata := list(cwd['hourly']['temperature_2m'])[:24]) ,
+                '24hr_max':(rain_max := (math.ceil(max(cwd['hourly']['precipitation']) / 0.5) * 0.5 if max(cwd['hourly']['precipitation']) > 0 else 0.0)),
                 '24hw': '\n'.join([replaces(templates['weatherpage/24h/weather'],{
                     'time': ts_to_text(cwd['hourly']['time'][hour], '%H:%M'),
                     'temp': _round(cwd['hourly']['temperature_2m'][hour]),
@@ -455,12 +459,17 @@ def weatherpage():
                     'l2_vis': line_chart_data['l2_vis'],
                     'cb_mag': line_chart_data['cb_mag'],
                     'tt_mag': line_chart_data['tt_mag'],
+                    'rt_mag': line_chart_data['rt_mag'],
                     'tc_mag': line_chart_data['tc_mag'],
+                    'rain': cwd['hourly']['precipitation'][hour],
+                    'h': _round(80/rain_max*cwd['hourly']['precipitation'][hour], 1) if rain_max > 0 else 0
                 }) for index, hour in enumerate(range(len(list(cwd['hourly']['time'])[:24]))) if (hourlylen := len(list(cwd['hourly']['time'])))]),
-                '24hr_max':(rain_max := (math.ceil(max(cwd['hourly']['precipitation']) / 0.5) * 0.5 if max(cwd['hourly']['precipitation']) > 0 else 0.0)),
                 '24hr_median':rain_max / 2,
                 '24hr': '\n'.join([replaces(templates['weatherpage/24h/rain'],{
                     'time': ts_to_text(cwd['hourly']['time'][hour], '%H:%M'),
+                    'border_radius': '5,0,0,5' if index == 0 else ('0,5,5,0' if index == hourlylen-1 else '0'),
+                    'weather_text': wmocode_to_text(cwd['hourly']['weather_code'][hour]),
+                    'weather_icon': get_icon(icon_qwid(cwd['hourly']['weather_code'][hour], cwd['hourly']['is_day'][hour])),
                     'rain': cwd['hourly']['precipitation'][hour],
                     'h': _round(80/rain_max*cwd['hourly']['precipitation'][hour], 1) if rain_max > 0 else 0
                 }) for index, hour in enumerate(range(len(list(cwd['hourly']['time'])[:24])))]),
